@@ -54,6 +54,7 @@
     <Compile Include="OddEvenSorting.cs" />
     <Compile Include="CollectionSortTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RefInt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

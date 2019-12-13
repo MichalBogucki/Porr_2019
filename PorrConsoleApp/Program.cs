@@ -11,7 +11,7 @@ namespace PorrConsoleApp
     {
         static void Main(string[] args)
         {
-            int n = 20000;
+            int n = 2000;
             
             var linearSorting = new OddEvenSorting(n);
             var preResult = linearSorting.GetPrimalColletion();

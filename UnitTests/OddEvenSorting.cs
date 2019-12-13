@@ -11,17 +11,28 @@ namespace UnitTests
     {
         public double sequentialTime { get; set; }
         public double parallelTime { get; set; }
-        public double parallelThreadsTime { get; set; }
+        public double referentialTime { get; set; }
+        public double quickTime { get; set; }
 
         private int _n;
         private int multiplication = 3;
         private List<int> _primalColletion;
+        private RefIntList _primalRefColletion;
         private List<int> _sortedSequentially;
         private List<int> _sortedParallely;
-        private List<int> _sortedThreadsParallely;
+        private RefIntList _sortedRefParallely;
         private Stopwatch stopWatch;
         private int pararellDegree = 4;
         
+        public OddEvenSorting(int n)
+        {
+            //if(IsOddSeq(n))
+            //        throw new Exception($"n = {n} must be an even number");
+
+            _n = n;
+            initializeCollection();
+        }
+
 
         public List<int> GetPrimalColletion()
         {
@@ -37,35 +48,32 @@ namespace UnitTests
 
         public List<int> GetSortedParallely()
         {
+            if (_sortedParallely == null)
+                sortParallely();
+
             return _sortedParallely;
         }
 
-        public List<int> GetSortedThreadsParallely()
+        public RefIntList GetSortedRefParallely()
         {
-            return _sortedThreadsParallely;
+            if (_sortedRefParallely == null)
+                sortRefParallely();
+            return _sortedRefParallely;
         }
 
-        public OddEvenSorting(int n)
+        public void DoitQuick()
         {
-            if(IsOddSeq(n))
-                throw new Exception($"n = {n} must be an even number");
-
-            _n = n;
-            _primalColletion = initializeCollection();
-
             stopWatch = Stopwatch.StartNew();
-            _sortedParallely = sortParallely(_primalColletion);
-            stopWatch.Stop();
-            parallelTime = stopWatch.Elapsed.TotalMilliseconds;
 
-            stopWatch = Stopwatch.StartNew();
-            _sortedThreadsParallely = sortThreadsParallely(_primalColletion);
+            var quick = _primalColletion.OrderBy(x=>x).ToList();
+
             stopWatch.Stop();
-            parallelThreadsTime = stopWatch.Elapsed.TotalMilliseconds;
+            quickTime = stopWatch.Elapsed.TotalMilliseconds;
 
         }
+        
 
-        public List<int> initializeCollection()
+        public void initializeCollection()
         {
             var rand = new Random();
 
@@ -75,10 +83,10 @@ namespace UnitTests
             while (iteration < _n)
             {
                 collection.Add(rand.Next(_n * multiplication));
-                iteration+=1;
+                iteration +=1;
             }
-
-            return collection;
+            _primalRefColletion = new RefIntList(collection);
+            _primalColletion = collection;
         }
 
         private void sortSequentially()
@@ -90,9 +98,9 @@ namespace UnitTests
             while (iteration <= _n)
             {
                 if (IsOddSeq(iteration)){
-                   sortOddSeq(_sortedSequentially);
+                   sortSeq(_sortedSequentially, isEven: 0);
                 } else {
-                   sortEvenSeq(_sortedSequentially);
+                   sortSeq(_sortedSequentially, isEven: 1);
                 }
 
                 iteration += 1;
@@ -102,10 +110,13 @@ namespace UnitTests
             sequentialTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
-        private List<int> sortParallely (List<int> collection)
+        private void sortParallely ()
         {
-            var tempCollection = new List<int>(collection);
+            stopWatch = Stopwatch.StartNew();
+
+            _sortedParallely = new List<int>(_primalColletion);
             var batches = new List<List<int>>();
+
             int first;
             int last;
 
@@ -115,110 +126,102 @@ namespace UnitTests
                 
                 if (IsOddSeq(iteration))
                 {
-                    batches = splitCollection(tempCollection, _n / pararellDegree);
+                    batches = splitCollection(_sortedParallely, _n / pararellDegree);
                     Parallel.ForEach(batches, 
                         new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
                         batch => batch = sortParallel(batch));
 
-                    tempCollection.Clear();
+                    
+                    _sortedParallely.Clear();
                     foreach (var batch in batches)
                     {
-                        tempCollection.AddRange(batch);
+                        _sortedParallely.AddRange(batch);
                     }
                 }
                 else
                 {
-                    first = tempCollection.FirstOrDefault();
-                    tempCollection.RemoveAt(0);
-                    last = tempCollection.LastOrDefault();
-                    tempCollection.RemoveAt(_n-2);
+                    first = _sortedParallely.FirstOrDefault();
+                    _sortedParallely.RemoveAt(0);
+                    last = _sortedParallely.LastOrDefault();
+                    _sortedParallely.RemoveAt(_n-2);
 
-                    batches = splitCollection(tempCollection, _n / pararellDegree);
+                    batches = splitCollection(_sortedParallely, _n / pararellDegree);
                     Parallel.ForEach(batches,
                         new ParallelOptions { MaxDegreeOfParallelism = pararellDegree }, 
                         batch => batch = sortParallel(batch));
 
-                    tempCollection.Clear();
-                    tempCollection.Add(first);
+                    _sortedParallely.Clear();
+                    _sortedParallely.Add(first);
                     foreach (var batch in batches)
                     {
-                        tempCollection.AddRange(batch);
+                        _sortedParallely.AddRange(batch);
                     }
-                    tempCollection.Add(last);
+                    _sortedParallely.Add(last);
                 }
 
                 iteration += 1;
             }
 
-            return tempCollection;
+            stopWatch.Stop();
+            parallelTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
-        private List<int> sortThreadsParallely(List<int> collection)
+        private void sortRefParallely()
         {
-            var tempCollection = new List<int>(collection);
+            _sortedRefParallely = new RefIntList(_primalRefColletion);
+
+            var oddBatches = new List<List<RefInt>>();
+            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(0, _n / 4));
+            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(_n / 4, _n / 4));
+            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(_n / 2, _n / 4));
+            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(_n * 3 / 4, _n / 4));
+
+            var evenBatches = new List<List<RefInt>>();
+            evenBatches.Add(_sortedRefParallely.refIntList.GetRange(1, _n / 4));
+            evenBatches.Add(_sortedRefParallely.refIntList.GetRange((_n / 4) + 1, _n / 4));
+            evenBatches.Add(_sortedRefParallely.refIntList.GetRange((_n / 2) + 1, _n / 4));
+            evenBatches.Add(_sortedRefParallely.refIntList.GetRange((_n * 3 / 4) + 1, (_n / 4) - 2));
+
+            stopWatch = Stopwatch.StartNew();
 
             var iteration = 1;
             while (iteration <= _n)
             {
-
                 if (IsOddSeq(iteration))
                 {
-                    //Operowac na tej samej kolekcji w pamieci, uzyc 4 watkow z oddzielna implementacja,
-                   // batches = splitCollection(tempCollection, _n / pararellDegree);
-                   // Parallel.ForEach(batches,
-                   //     new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
-                   //     batch => batch = sortParallel(batch));
+                   Parallel.ForEach(oddBatches,
+                       new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                       batch => sortRefParallel(batch));
                 }
                 else
                 {
-                    //Operowac na tej samej kolekcji w pamieci, uzyc 4 watkow z oddzielna implementacja,
-                   //first = tempCollection.FirstOrDefault();
-                   //tempCollection.RemoveAt(0);
-                   //last = tempCollection.LastOrDefault();
-                   //tempCollection.RemoveAt(_n - 2);
-                   //
-                   //batches = splitCollection(tempCollection, _n / pararellDegree);
-                   //Parallel.ForEach(batches,
-                   //    new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
-                   //    batch => batch = sortParallel(batch));
-                    
-                }
+                    Parallel.ForEach(evenBatches,
+                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                        batch => sortRefParallel(batch));
 
-                Task.WaitAll();
+                }
+            
                 iteration += 1;
             }
 
-            return tempCollection;
+            stopWatch.Stop();
+            referentialTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
 
-        private void sortOddSeq(List<int> collection)
+        private void sortSeq(List<int> collection, int isEven = 0)
         {
             var index = 0;
-            while (index < collection.Count)
+            while (index < collection.Count - 2 * isEven)
             {
-                if (collection[index] > collection[index + 1])
-                {
-                    int temp = collection[index];
-                    collection[index] = collection[index + 1];
-                    collection[index + 1] = temp;
-                }
+                if (index == collection.Count - 1)
+                    break;
 
-                index += 2;
-            }
-
-        }
-
-        private void sortEvenSeq(List<int> collection)
-        {
-            var index = 0;
-            while (index < collection.Count - 2)
-            {
-                if (collection[index + 1] > collection[index + 2])
+                if (collection[index + 1] > collection[index + 1 + isEven])
                 {
                     int temp = collection[index + 1];
-                    collection[index + 1] = collection[index + 2];
-                    collection[index + 2] = temp;
+                    collection[index + 1] = collection[index + 1 + isEven];
+                    collection[index + 1 + isEven] = temp;
                 }
 
                 index += 2;
@@ -230,6 +233,9 @@ namespace UnitTests
             var index = 0;
             while (index < (collection.Count))
             {
+                if (index == collection.Count - 1)
+                    return collection;
+
                 if (collection[index] > collection[index + 1])
                 {
                     int temp = collection[index];
@@ -241,6 +247,26 @@ namespace UnitTests
             }
 
             return collection;
+        }
+
+        private void sortRefParallel(List<RefInt> collection)
+        {
+            var index = 0;
+            while (index < (collection.Count))
+            {
+                if (index == collection.Count - 1)
+                    break;
+
+                if (collection[index].refint > collection[index + 1].refint)
+                {
+                    int temp = collection[index].refint;
+                    collection[index].refint = collection[index + 1].refint;
+                    collection[index + 1].refint = temp;
+                }
+
+                index += 2;
+            }
+
         }
 
 
