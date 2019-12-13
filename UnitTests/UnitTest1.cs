@@ -1,5 +1,4 @@
 ﻿using System;
-using BusinessLogic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests
@@ -7,7 +6,7 @@ namespace UnitTests
     [TestClass]
     public class UnitTest1
     {
-        private int n = 16;
+        private int n = 100000;
         [TestMethod]
         public void InitializeCollectionTest()
         {
@@ -22,19 +21,22 @@ namespace UnitTests
         {
             var linearSorting = new OddEvenSorting(n);
             var preResult = linearSorting.GetPrimalColletion();
-            var postResult = linearSorting.GetSortedSequentially();
-            var executionTime = linearSorting.sequentialTime;
+            var seqResult = linearSorting.GetSortedSequentially();
+            var parallelResult = linearSorting.GetSortedParallely();
+            var sequentialTime = linearSorting.sequentialTime;
+            var parallelTime = linearSorting.parallelTime;
 
             if (n <= 16)
                 Console.WriteLine(string.Join(", ", preResult.ToArray()));
-
-            Console.WriteLine($"execution time = {executionTime} ms");
+            //todo delete me
+            Console.WriteLine($"n = {n}, sequentialTime = {sequentialTime} ms");
+            Console.WriteLine($"n = {n}, parallelTime = {parallelTime} ms");
 
             if (n <= 16)
-                Console.WriteLine(string.Join(", ", postResult.ToArray()));
+                Console.WriteLine(string.Join(", ", seqResult.ToArray()));
 
+            Equals(seqResult, preResult);
             Equals(preResult.Count == n);
-            Equals(postResult.Count == n);
         }
     }
 }
