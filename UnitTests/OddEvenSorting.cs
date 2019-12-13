@@ -11,12 +11,14 @@ namespace UnitTests
     {
         public double sequentialTime { get; set; }
         public double parallelTime { get; set; }
+        public double parallelThreadsTime { get; set; }
 
         private int _n;
         private int multiplication = 3;
         private List<int> _primalColletion;
         private List<int> _sortedSequentially;
         private List<int> _sortedParallely;
+        private List<int> _sortedThreadsParallely;
         private Stopwatch stopWatch;
         private int pararellDegree = 4;
         
@@ -27,13 +29,20 @@ namespace UnitTests
         }
         public List<int> GetSortedSequentially()
         {
+            if(_sortedSequentially == null)
+                sortSequentially();
+
             return _sortedSequentially;
         }
-
 
         public List<int> GetSortedParallely()
         {
             return _sortedParallely;
+        }
+
+        public List<int> GetSortedThreadsParallely()
+        {
+            return _sortedThreadsParallely;
         }
 
         public OddEvenSorting(int n)
@@ -45,14 +54,14 @@ namespace UnitTests
             _primalColletion = initializeCollection();
 
             stopWatch = Stopwatch.StartNew();
-            _sortedSequentially = sortSequentially(_primalColletion);
-            stopWatch.Stop();
-            sequentialTime = stopWatch.Elapsed.TotalMilliseconds;
-
-            stopWatch = Stopwatch.StartNew();
             _sortedParallely = sortParallely(_primalColletion);
             stopWatch.Stop();
             parallelTime = stopWatch.Elapsed.TotalMilliseconds;
+
+            stopWatch = Stopwatch.StartNew();
+            _sortedThreadsParallely = sortThreadsParallely(_primalColletion);
+            stopWatch.Stop();
+            parallelThreadsTime = stopWatch.Elapsed.TotalMilliseconds;
 
         }
 
@@ -72,23 +81,25 @@ namespace UnitTests
             return collection;
         }
 
-        private List<int> sortSequentially(List<int> collection)
+        private void sortSequentially()
         {
-            var tempCollection = new List<int>(collection);
+            stopWatch = Stopwatch.StartNew();
+            _sortedSequentially = new List<int>(_primalColletion);
 
             var iteration = 1;
             while (iteration <= _n)
             {
                 if (IsOddSeq(iteration)){
-                    tempCollection = sortOddSeq(tempCollection);
+                   sortOddSeq(_sortedSequentially);
                 } else {
-                    tempCollection = sortEvenSeq(tempCollection);
+                   sortEvenSeq(_sortedSequentially);
                 }
 
                 iteration += 1;
             }
 
-            return tempCollection;
+            stopWatch.Stop();
+            sequentialTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
         private List<int> sortParallely (List<int> collection)
@@ -105,9 +116,11 @@ namespace UnitTests
                 if (IsOddSeq(iteration))
                 {
                     batches = splitCollection(tempCollection, _n / pararellDegree);
-                    Parallel.ForEach(batches, batch => batch = sortOddParal(batch));
+                    Parallel.ForEach(batches, 
+                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                        batch => batch = sortParallel(batch));
 
-                    tempCollection = new List<int>();
+                    tempCollection.Clear();
                     foreach (var batch in batches)
                     {
                         tempCollection.AddRange(batch);
@@ -121,9 +134,11 @@ namespace UnitTests
                     tempCollection.RemoveAt(_n-2);
 
                     batches = splitCollection(tempCollection, _n / pararellDegree);
-                    Parallel.ForEach(batches, batch => batch = sortEvenParal(batch));
+                    Parallel.ForEach(batches,
+                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree }, 
+                        batch => batch = sortParallel(batch));
 
-                    tempCollection = new List<int>();
+                    tempCollection.Clear();
                     tempCollection.Add(first);
                     foreach (var batch in batches)
                     {
@@ -132,26 +147,57 @@ namespace UnitTests
                     tempCollection.Add(last);
                 }
 
-                
-                
-
                 iteration += 1;
             }
 
+            return tempCollection;
+        }
 
-            //Todo Task.AwaitAll();
+        private List<int> sortThreadsParallely(List<int> collection)
+        {
+            var tempCollection = new List<int>(collection);
+
+            var iteration = 1;
+            while (iteration <= _n)
+            {
+
+                if (IsOddSeq(iteration))
+                {
+                    //Operowac na tej samej kolekcji w pamieci, uzyc 4 watkow z oddzielna implementacja,
+                   // batches = splitCollection(tempCollection, _n / pararellDegree);
+                   // Parallel.ForEach(batches,
+                   //     new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                   //     batch => batch = sortParallel(batch));
+                }
+                else
+                {
+                    //Operowac na tej samej kolekcji w pamieci, uzyc 4 watkow z oddzielna implementacja,
+                   //first = tempCollection.FirstOrDefault();
+                   //tempCollection.RemoveAt(0);
+                   //last = tempCollection.LastOrDefault();
+                   //tempCollection.RemoveAt(_n - 2);
+                   //
+                   //batches = splitCollection(tempCollection, _n / pararellDegree);
+                   //Parallel.ForEach(batches,
+                   //    new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                   //    batch => batch = sortParallel(batch));
+                    
+                }
+
+                Task.WaitAll();
+                iteration += 1;
+            }
+
             return tempCollection;
         }
 
 
-        private List<int> sortOddSeq(List<int> collection)
+        private void sortOddSeq(List<int> collection)
         {
             var index = 0;
             while (index < collection.Count)
             {
-                var left = collection[index];
-                var right = collection[index + 1];
-                if (left > right)
+                if (collection[index] > collection[index + 1])
                 {
                     int temp = collection[index];
                     collection[index] = collection[index + 1];
@@ -161,17 +207,14 @@ namespace UnitTests
                 index += 2;
             }
 
-            return collection;
         }
 
-        private List<int> sortEvenSeq(List<int> collection)
+        private void sortEvenSeq(List<int> collection)
         {
             var index = 0;
             while (index < collection.Count - 2)
             {
-                var left  = collection[index + 1];
-                var right = collection[index + 2];
-                if (left > right)
+                if (collection[index + 1] > collection[index + 2])
                 {
                     int temp = collection[index + 1];
                     collection[index + 1] = collection[index + 2];
@@ -180,37 +223,14 @@ namespace UnitTests
 
                 index += 2;
             }
-
-            return collection;
         }
 
-        private List<int> sortEvenParal(List<int> collection)
+        private List<int> sortParallel(List<int> collection)
         {
             var index = 0;
             while (index < (collection.Count))
             {
-                var left = collection[index];
-                var right = collection[index + 1];
-                if (left > right)
-                {
-                    int temp = collection[index];
-                    collection[index] = collection[index + 1];
-                    collection[index + 1] = temp;
-                }
-
-                index += 2;
-            }
-
-            return collection;
-        }
-        private List<int> sortOddParal(List<int> collection)
-        {
-            var index = 0;
-            while (index < collection.Count)
-            {
-                var left = collection[index];
-                var right = collection[index + 1];
-                if (left > right)
+                if (collection[index] > collection[index + 1])
                 {
                     int temp = collection[index];
                     collection[index] = collection[index + 1];
@@ -229,7 +249,7 @@ namespace UnitTests
             return iteration % 2 == 1;
         }
 
-        public List<List<T>> splitCollection<T>(List<T> collection, int size)
+        private List<List<T>> splitCollection<T>(List<T> collection, int size)
         {
             var chunks = new List<List<T>>();
             var chunkCount = collection.Count() / size;

@@ -4,17 +4,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTests
 {
     [TestClass]
-    public class UnitTest1
+    public class CollectionSortTest
     {
-        private int n = 100000;
-        [TestMethod]
-        public void InitializeCollectionTest()
-        {
-            
-            var linearSorting = new OddEvenSorting(n);
-            var result = linearSorting.GetPrimalColletion();
-            Equals(result.Count == n);
-        }
+        private int n = 10000;
 
         [TestMethod]
         public void LinearSortCollectionTest()
@@ -23,8 +15,9 @@ namespace UnitTests
             var preResult = linearSorting.GetPrimalColletion();
             var seqResult = linearSorting.GetSortedSequentially();
             var parallelResult = linearSorting.GetSortedParallely();
-            var sequentialTime = linearSorting.sequentialTime;
+            
             var parallelTime = linearSorting.parallelTime;
+            var sequentialTime = linearSorting.sequentialTime;
 
             if (n <= 16)
                 Console.WriteLine(string.Join(", ", preResult.ToArray()));
