@@ -6,45 +6,40 @@ namespace UnitTests
     [TestClass]
     public class CollectionSortTest
     {
-        private int n = 20000;
+        private int n = 10000;
 
         [TestMethod]
         public void LinearSortCollectionTest()
         {
             var linearSorting = new OddEvenSorting(n);
-            linearSorting.DoitQuick();
-            var preResult = linearSorting.GetPrimalColletion();
             
-            var parallelResult = linearSorting.GetSortedParallely();
+            var preResult = linearSorting.GetPrimalColletion();
 
-            var refResult = linearSorting.GetSortedRefParallely();
-            var refAsNormalResult = refResult.ToNormalIntList();
+            var quickResult = linearSorting.GetPrimalQuickSorktedColletion();
+            var sequentialResult = linearSorting.GetSortedSequentially().ToNormalIntList();
+            var pararellResult = linearSorting.GetSortedParallely().ToNormalIntList();
 
-            var seqResult = linearSorting.GetSortedSequentially();
-
-            var parallelTime = linearSorting.parallelTime;
-            var sequentialTime = linearSorting.sequentialTime;
-            var referenceTime = linearSorting.referentialTime;
-            var quickTime = linearSorting.quickTime;
+            var quickTime = linearSorting.QuickTime;
+            var sequentialTime = linearSorting.SequentialTime;
+            var parallelTime = linearSorting.ParallelTime;
+            
 
             if (n <= 16)
                 Console.WriteLine(string.Join(", ", preResult.ToArray()));
-            
+
+            Console.WriteLine($"n = {n}, quickTime = {quickTime} ms");
             Console.WriteLine($"n = {n}, sequentialTime = {sequentialTime} ms");
             Console.WriteLine($"n = {n}, parallelTime = {parallelTime} ms");
-            Console.WriteLine($"n = {n}, referenceTime = {referenceTime} ms");
-            Console.WriteLine($"n = {n}, quickTime = {quickTime} ms");
+            Console.WriteLine(string.Join(", ", pararellResult.ToArray()));
 
             if (n <= 16)
             {
-                Console.WriteLine(string.Join(", ", seqResult.ToArray()));
-                //Console.WriteLine(string.Join(", ", parallelResult.ToArray()));
-                Console.WriteLine(string.Join(", ", refAsNormalResult.ToArray()));
+                Console.WriteLine(string.Join(", ", sequentialResult.ToArray()));
+                Console.WriteLine(string.Join(", ", pararellResult.ToArray()));
             }
-
-            Equals(seqResult, preResult);
-            Equals(seqResult, refAsNormalResult);
-            Equals(preResult.Count == n);
+            
+            CollectionAssert.AreEqual(sequentialResult, quickResult);
+            CollectionAssert.AreEqual(sequentialResult, pararellResult);
         }
     }
 }

@@ -1,82 +1,56 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnitTests
 {
     public class OddEvenSorting
     {
-        public double sequentialTime { get; set; }
-        public double parallelTime { get; set; }
-        public double referentialTime { get; set; }
-        public double quickTime { get; set; }
+        public double SequentialTime { get; set; }
+        public double ParallelTime { get; set; }
+        public double QuickTime { get; set; }
 
-        private int _n;
-        private int multiplication = 3;
+        private readonly int _n;
+        private readonly int multiplication = 3;
         private List<int> _primalColletion;
-        private RefIntList _primalRefColletion;
-        private List<int> _sortedSequentially;
-        private List<int> _sortedParallely;
-        private RefIntList _sortedRefParallely;
+        private List<int> _primalQuickSorktedColletion;
+        private RefIntList _sortedSequentially;
+        private RefIntList _sortedParallely;
         private Stopwatch stopWatch;
         private int pararellDegree = 4;
         
         public OddEvenSorting(int n)
         {
-            //if(IsOddSeq(n))
-            //        throw new Exception($"n = {n} must be an even number");
-
             _n = n;
-            initializeCollection();
+            InitializeCollection();
+            DoitQuick();
         }
 
+        public List<int> GetPrimalColletion() { return _primalColletion; }
 
-        public List<int> GetPrimalColletion()
-        {
-            return _primalColletion;
-        }
-        public List<int> GetSortedSequentially()
+        public List<int> GetPrimalQuickSorktedColletion() { return _primalQuickSorktedColletion; }
+        public RefIntList GetSortedSequentially()
         {
             if(_sortedSequentially == null)
-                sortSequentially();
-
+                SortSequentially();
             return _sortedSequentially;
         }
-
-        public List<int> GetSortedParallely()
+        
+        public RefIntList GetSortedParallely()
         {
             if (_sortedParallely == null)
-                sortParallely();
-
+                SortParallely();
             return _sortedParallely;
         }
 
-        public RefIntList GetSortedRefParallely()
-        {
-            if (_sortedRefParallely == null)
-                sortRefParallely();
-            return _sortedRefParallely;
-        }
-
-        public void DoitQuick()
-        {
-            stopWatch = Stopwatch.StartNew();
-
-            var quick = _primalColletion.OrderBy(x=>x).ToList();
-
-            stopWatch.Stop();
-            quickTime = stopWatch.Elapsed.TotalMilliseconds;
-
-        }
-        
-
-        public void initializeCollection()
+        public void InitializeCollection()
         {
             var rand = new Random();
-
             var collection = new List<int>();
 
             var iteration = 0;
@@ -85,208 +59,117 @@ namespace UnitTests
                 collection.Add(rand.Next(_n * multiplication));
                 iteration +=1;
             }
-            _primalRefColletion = new RefIntList(collection);
             _primalColletion = collection;
         }
 
-        private void sortSequentially()
+        private void SortSequentially()
         {
-            stopWatch = Stopwatch.StartNew();
-            _sortedSequentially = new List<int>(_primalColletion);
+            _sortedSequentially = new RefIntList(_primalColletion);
+            var oddBatches = InitializeBatches(_sortedSequentially, isEven: 0);
+            var evenBatches = InitializeBatches(_sortedSequentially, isEven: 1);
 
+            stopWatch = Stopwatch.StartNew();
             var iteration = 1;
             while (iteration <= _n)
             {
-                if (IsOddSeq(iteration)){
-                   sortSeq(_sortedSequentially, isEven: 0);
+                if (IsOdd(iteration)){
+                    foreach (var batch in oddBatches){
+                        SwapPhase(batch);
+                        //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                    }
                 } else {
-                   sortSeq(_sortedSequentially, isEven: 1);
-                }
-
-                iteration += 1;
-            }
-
-            stopWatch.Stop();
-            sequentialTime = stopWatch.Elapsed.TotalMilliseconds;
-        }
-
-        private void sortParallely ()
-        {
-            stopWatch = Stopwatch.StartNew();
-
-            _sortedParallely = new List<int>(_primalColletion);
-            var batches = new List<List<int>>();
-
-            int first;
-            int last;
-
-            var iteration = 1;
-            while (iteration <= _n)
-            {
-                
-                if (IsOddSeq(iteration))
-                {
-                    batches = splitCollection(_sortedParallely, _n / pararellDegree);
-                    Parallel.ForEach(batches, 
-                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
-                        batch => batch = sortParallel(batch));
-
-                    
-                    _sortedParallely.Clear();
-                    foreach (var batch in batches)
-                    {
-                        _sortedParallely.AddRange(batch);
+                    foreach (var batch in evenBatches){
+                        SwapPhase(batch);
+                        //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
                     }
                 }
-                else
-                {
-                    first = _sortedParallely.FirstOrDefault();
-                    _sortedParallely.RemoveAt(0);
-                    last = _sortedParallely.LastOrDefault();
-                    _sortedParallely.RemoveAt(_n-2);
-
-                    batches = splitCollection(_sortedParallely, _n / pararellDegree);
-                    Parallel.ForEach(batches,
-                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree }, 
-                        batch => batch = sortParallel(batch));
-
-                    _sortedParallely.Clear();
-                    _sortedParallely.Add(first);
-                    foreach (var batch in batches)
-                    {
-                        _sortedParallely.AddRange(batch);
-                    }
-                    _sortedParallely.Add(last);
-                }
-
                 iteration += 1;
             }
-
             stopWatch.Stop();
-            parallelTime = stopWatch.Elapsed.TotalMilliseconds;
+            SequentialTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
-        private void sortRefParallely()
+
+        private void SortParallely()
         {
-            _sortedRefParallely = new RefIntList(_primalRefColletion);
-
-            var oddBatches = new List<List<RefInt>>();
-            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(0, _n / 4));
-            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(_n / 4, _n / 4));
-            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(_n / 2, _n / 4));
-            oddBatches.Add(_sortedRefParallely.refIntList.GetRange(_n * 3 / 4, _n / 4));
-
-            var evenBatches = new List<List<RefInt>>();
-            evenBatches.Add(_sortedRefParallely.refIntList.GetRange(1, _n / 4));
-            evenBatches.Add(_sortedRefParallely.refIntList.GetRange((_n / 4) + 1, _n / 4));
-            evenBatches.Add(_sortedRefParallely.refIntList.GetRange((_n / 2) + 1, _n / 4));
-            evenBatches.Add(_sortedRefParallely.refIntList.GetRange((_n * 3 / 4) + 1, (_n / 4) - 2));
+            _sortedParallely = new RefIntList(_primalColletion);
+            var oddBatches = InitializeBatches(_sortedParallely, isEven: 0);
+            var evenBatches = InitializeBatches(_sortedParallely, isEven: 1);
 
             stopWatch = Stopwatch.StartNew();
-
             var iteration = 1;
-            while (iteration <= _n)
-            {
-                if (IsOddSeq(iteration))
-                {
+            while (iteration <= _n) {
+                if (IsOdd(iteration)) {
                    Parallel.ForEach(oddBatches,
                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
-                       batch => sortRefParallel(batch));
-                }
-                else
-                {
+                       batch => {
+                           SwapPhase(batch);
+                           //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                       });
+                } else {
                     Parallel.ForEach(evenBatches,
                         new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
-                        batch => sortRefParallel(batch));
-
+                        batch => {
+                            SwapPhase(batch);
+                            //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                        });
                 }
-            
                 iteration += 1;
             }
-
             stopWatch.Stop();
-            referentialTime = stopWatch.Elapsed.TotalMilliseconds;
+            ParallelTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
-
-        private void sortSeq(List<int> collection, int isEven = 0)
+        private ConcurrentBag<List<RefInt>> InitializeBatches(RefIntList collection, int isEven)
         {
-            var index = 0;
-            while (index < collection.Count - 2 * isEven)
+            var count = _n / 4;
+            if (IsOdd(count))
+                throw new Exception($"Batch.Count = {count} must be an even number.");
+
+            var evenBatches = new ConcurrentBag<List<RefInt>>
             {
-                if (index == collection.Count - 1)
-                    break;
-
-                if (collection[index + 1] > collection[index + 1 + isEven])
-                {
-                    int temp = collection[index + 1];
-                    collection[index + 1] = collection[index + 1 + isEven];
-                    collection[index + 1 + isEven] = temp;
-                }
-
-                index += 2;
-            }
+                collection.refIntList.GetRange(isEven, count),
+                collection.refIntList.GetRange((1 * count) + isEven, count),
+                collection.refIntList.GetRange((2 * count) + isEven, count),
+                collection.refIntList.GetRange((3 * count) + isEven, (count) - 2 * isEven)
+            };
+            return evenBatches;
         }
 
-        private List<int> sortParallel(List<int> collection)
-        {
-            var index = 0;
-            while (index < (collection.Count))
-            {
-                if (index == collection.Count - 1)
-                    return collection;
-
-                if (collection[index] > collection[index + 1])
-                {
-                    int temp = collection[index];
-                    collection[index] = collection[index + 1];
-                    collection[index + 1] = temp;
-                }
-
-                index += 2;
-            }
-
-            return collection;
-        }
-
-        private void sortRefParallel(List<RefInt> collection)
-        {
-            var index = 0;
-            while (index < (collection.Count))
-            {
-                if (index == collection.Count - 1)
-                    break;
-
-                if (collection[index].refint > collection[index + 1].refint)
-                {
-                    int temp = collection[index].refint;
-                    collection[index].refint = collection[index + 1].refint;
-                    collection[index + 1].refint = temp;
-                }
-
-                index += 2;
-            }
-
-        }
-
-
-        private bool IsOddSeq(int iteration)
+        private bool IsOdd(int iteration)
         {
             return iteration % 2 == 1;
         }
 
-        private List<List<T>> splitCollection<T>(List<T> collection, int size)
+        private void SwapPhase(List<RefInt> batch)
         {
-            var chunks = new List<List<T>>();
-            var chunkCount = collection.Count() / size;
+            if (IsOdd(batch.Count))
+                throw new Exception($"Batch.Count = {batch.Count} must be an even number.");
 
-            if (collection.Count % size > 0)
-                chunkCount++;
+            var index = 0;
+            while (index < (batch.Count))
+            {
+                if (index == batch.Count - 1)
+                    break;
 
-            for (var i = 0; i < chunkCount; i++)
-                chunks.Add(collection.Skip(i * size).Take(size).ToList());
+                if (batch[index].refint > batch[index + 1].refint)
+                {
+                    int temp = batch[index].refint;
+                    batch[index].refint = batch[index + 1].refint;
+                    batch[index + 1].refint = temp;
+                }
+                index += 2;
+            }
+        }
 
-            return chunks;
+        private void DoitQuick()
+        {
+            stopWatch = Stopwatch.StartNew();
+
+            _primalQuickSorktedColletion = _primalColletion.OrderBy(x => x).ToList();
+
+            stopWatch.Stop();
+            QuickTime = stopWatch.Elapsed.TotalMilliseconds;
         }
 
     }
