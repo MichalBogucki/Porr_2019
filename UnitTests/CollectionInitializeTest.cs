@@ -7,9 +7,8 @@ namespace UnitTests
     [TestClass]
     public class CollectionInitializeTest
     {
-        private int n = 16;
-        [TestMethod]
-        public void InitializeCollectionTest()
+        [DataRow(16)]
+        public void InitializeCollectionTest(int n)
         {
             var linearSorting = new OddEvenSorting(n);
             var result = linearSorting.GetPrimalColletion();

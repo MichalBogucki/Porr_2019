@@ -22,7 +22,7 @@ namespace UnitTests
         private RefIntList _sortedSequentially;
         private RefIntList _sortedParallely;
         private Stopwatch stopWatch;
-        private int pararellDegree = 4;
+        private int parallelDegree = 4;
         
         public OddEvenSorting(int n)
         {
@@ -33,7 +33,7 @@ namespace UnitTests
 
         public List<int> GetPrimalColletion() { return _primalColletion; }
 
-        public List<int> GetPrimalQuickSorktedColletion() { return _primalQuickSorktedColletion; }
+        public List<int> GetPrimalQuickSortedColletion() { return _primalQuickSorktedColletion; }
         public RefIntList GetSortedSequentially()
         {
             if(_sortedSequentially == null)
@@ -65,8 +65,8 @@ namespace UnitTests
         private void SortSequentially()
         {
             _sortedSequentially = new RefIntList(_primalColletion);
-            var oddBatches = InitializeBatches(_sortedSequentially, isEven: 0);
-            var evenBatches = InitializeBatches(_sortedSequentially, isEven: 1);
+            var oddBatches = InitializeNormalBatches(_sortedSequentially, isEven: 0);
+            var evenBatches = InitializeNormalBatches(_sortedSequentially, isEven: 1);
 
             stopWatch = Stopwatch.StartNew();
             var iteration = 1;
@@ -93,22 +93,22 @@ namespace UnitTests
         private void SortParallely()
         {
             _sortedParallely = new RefIntList(_primalColletion);
-            var oddBatches = InitializeBatches(_sortedParallely, isEven: 0);
-            var evenBatches = InitializeBatches(_sortedParallely, isEven: 1);
+            var oddBatches = InitializeConcurrentBatches(_sortedParallely, isEven: 0);
+            var evenBatches = InitializeConcurrentBatches(_sortedParallely, isEven: 1);
 
             stopWatch = Stopwatch.StartNew();
             var iteration = 1;
             while (iteration <= _n) {
                 if (IsOdd(iteration)) {
                    Parallel.ForEach(oddBatches,
-                       new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                       new ParallelOptions { MaxDegreeOfParallelism = parallelDegree },
                        batch => {
                            SwapPhase(batch);
                            //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
                        });
                 } else {
                     Parallel.ForEach(evenBatches,
-                        new ParallelOptions { MaxDegreeOfParallelism = pararellDegree },
+                        new ParallelOptions { MaxDegreeOfParallelism = parallelDegree },
                         batch => {
                             SwapPhase(batch);
                             //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
@@ -119,21 +119,36 @@ namespace UnitTests
             stopWatch.Stop();
             ParallelTime = stopWatch.Elapsed.TotalMilliseconds;
         }
-
-        private ConcurrentBag<List<RefInt>> InitializeBatches(RefIntList collection, int isEven)
+        private List<List<RefInt>> InitializeNormalBatches(RefIntList collection, int isEven)
         {
             var count = _n / 4;
             if (IsOdd(count))
                 throw new Exception($"Batch.Count = {count} must be an even number.");
 
-            var evenBatches = new ConcurrentBag<List<RefInt>>
+            var normalBatches = new List<List<RefInt>>
             {
                 collection.refIntList.GetRange(isEven, count),
                 collection.refIntList.GetRange((1 * count) + isEven, count),
                 collection.refIntList.GetRange((2 * count) + isEven, count),
                 collection.refIntList.GetRange((3 * count) + isEven, (count) - 2 * isEven)
             };
-            return evenBatches;
+            return normalBatches;
+        }
+
+        private ConcurrentBag<List<RefInt>> InitializeConcurrentBatches(RefIntList collection, int isEven)
+        {
+            var count = _n / 4;
+            if (IsOdd(count))
+                throw new Exception($"Batch.Count = {count} must be an even number.");
+
+            var concurrentBatches = new ConcurrentBag<List<RefInt>>
+            {
+                collection.refIntList.GetRange(isEven, count),
+                collection.refIntList.GetRange((1 * count) + isEven, count),
+                collection.refIntList.GetRange((2 * count) + isEven, count),
+                collection.refIntList.GetRange((3 * count) + isEven, (count) - 2 * isEven)
+            };
+            return concurrentBatches;
         }
 
         private bool IsOdd(int iteration)

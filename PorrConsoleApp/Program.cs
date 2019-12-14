@@ -17,7 +17,7 @@ namespace PorrConsoleApp
 
             var preResult = linearSorting.GetPrimalColletion();
 
-            var quickResult = linearSorting.GetPrimalQuickSorktedColletion();
+            var quickResult = linearSorting.GetPrimalQuickSortedColletion();
             var sequentialResult = linearSorting.GetSortedSequentially().ToNormalIntList();
             var pararellResult = linearSorting.GetSortedParallely().ToNormalIntList();
 
