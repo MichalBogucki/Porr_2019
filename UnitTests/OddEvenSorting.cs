@@ -74,13 +74,13 @@ namespace UnitTests
             {
                 if (IsOdd(iteration)){
                     foreach (var batch in oddBatches){
-                        SwapPhase(batch);
-                        //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                        SwapPhase(batch, isParal: 0);
+                        //Console.WriteLine("(seq)Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
                     }
                 } else {
                     foreach (var batch in evenBatches){
-                        SwapPhase(batch);
-                        //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                        SwapPhase(batch, isParal: 0);
+                        //Console.WriteLine("(seq)Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
                     }
                 }
                 iteration += 1;
@@ -103,15 +103,15 @@ namespace UnitTests
                    Parallel.ForEach(oddBatches,
                        new ParallelOptions { MaxDegreeOfParallelism = parallelDegree },
                        batch => {
-                           SwapPhase(batch);
-                           //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                           SwapPhase(batch, isParal:1);
+                           //Console.WriteLine("(paral)Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
                        });
                 } else {
                     Parallel.ForEach(evenBatches,
                         new ParallelOptions { MaxDegreeOfParallelism = parallelDegree },
                         batch => {
-                            SwapPhase(batch);
-                            //Console.WriteLine("Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
+                            SwapPhase(batch, isParal: 1);
+                            //Console.WriteLine("(paral)Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
                         });
                 }
                 iteration += 1;
@@ -156,14 +156,16 @@ namespace UnitTests
             return iteration % 2 == 1;
         }
 
-        private void SwapPhase(List<RefInt> batch)
+        private void SwapPhase(List<RefInt> batch, int isParal)
         {
             if (IsOdd(batch.Count))
                 throw new Exception($"Batch.Count = {batch.Count} must be an even number.");
 
+            var thread = isParal == 1 ? "(paral)" : "(seq)";
             var index = 0;
             while (index < (batch.Count))
             {
+                Console.WriteLine($"{thread}Thread Id= {Thread.CurrentThread.ManagedThreadId}");
                 if (index == batch.Count - 1)
                     break;
 

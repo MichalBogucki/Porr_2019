@@ -54,7 +54,7 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow(65536)]
+        [DataRow(64)]
         public void LinearSortCllectionTest2(int n)
         {
             var sorting = new OddEvenSorting(n);
@@ -62,8 +62,9 @@ namespace UnitTests
             var primalColletion = sorting.GetPrimalColletion();
 
             var quickResult = sorting.GetPrimalQuickSortedColletion();
-            var sequentialResult = sorting.GetSortedSequentially().ToNormalIntList();
+            
             var parallelResult = sorting.GetSortedParallely().ToNormalIntList();
+            var sequentialResult = sorting.GetSortedSequentially().ToNormalIntList();
 
             var quickTime = sorting.QuickTime;
             var sequentialTime = sorting.SequentialTime;
