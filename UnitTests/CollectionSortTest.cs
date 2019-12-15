@@ -54,7 +54,7 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow(64)]
+        [DataRow(10)]
         public void LinearSortCllectionTest2(int n)
         {
             var sorting = new OddEvenSorting(n);

@@ -26,6 +26,8 @@ namespace UnitTests
         
         public OddEvenSorting(int n)
         {
+            if (IsOdd(n))
+                throw new Exception($"n = {n} must be an even number.");
             _n = n;
             InitializeCollection();
             DoitQuick();
@@ -121,32 +123,40 @@ namespace UnitTests
         }
         private List<List<RefInt>> InitializeNormalBatches(RefIntList collection, int isEven)
         {
-            var count = _n / 4;
-            if (IsOdd(count))
-                throw new Exception($"Batch.Count = {count} must be an even number.");
+            var moduloFourSlide = 0;
+            if (_n % 4 == 2)
+                moduloFourSlide = 2;
+            var oddFloor = 0;
+            var floor = (int) Math.Floor(_n / 4.0);
+            if (IsOdd(floor))
+                oddFloor = 1;
 
-            var normalBatches = new List<List<RefInt>>
+                var normalBatches = new List<List<RefInt>>
             {
-                collection.refIntList.GetRange(isEven, count),
-                collection.refIntList.GetRange((1 * count) + isEven, count),
-                collection.refIntList.GetRange((2 * count) + isEven, count),
-                collection.refIntList.GetRange((3 * count) + isEven, (count) - 2 * isEven)
+                collection.refIntList.GetRange(isEven, floor+oddFloor),
+                collection.refIntList.GetRange((1 * floor+oddFloor)  + isEven, floor+moduloFourSlide+oddFloor),
+                collection.refIntList.GetRange((2 * floor+moduloFourSlide+oddFloor*2) + isEven, floor - oddFloor ),
+                collection.refIntList.GetRange((3 * floor+moduloFourSlide+oddFloor) + isEven, (floor) - 2 * isEven - oddFloor)
             };
             return normalBatches;
         }
 
         private ConcurrentBag<List<RefInt>> InitializeConcurrentBatches(RefIntList collection, int isEven)
         {
-            var count = _n / 4;
-            if (IsOdd(count))
-                throw new Exception($"Batch.Count = {count} must be an even number.");
+            var moduloFourSlide = 0;
+            if (_n % 4 == 2)
+                moduloFourSlide = 2;
+            var oddFloor = 0;
+            var floor = (int)Math.Floor(_n / 4.0);
+            if (IsOdd(floor))
+                oddFloor = 1; ;
 
             var concurrentBatches = new ConcurrentBag<List<RefInt>>
             {
-                collection.refIntList.GetRange(isEven, count),
-                collection.refIntList.GetRange((1 * count) + isEven, count),
-                collection.refIntList.GetRange((2 * count) + isEven, count),
-                collection.refIntList.GetRange((3 * count) + isEven, (count) - 2 * isEven)
+                collection.refIntList.GetRange(isEven, floor+oddFloor),
+                collection.refIntList.GetRange((1 * floor+oddFloor)  + isEven, floor+moduloFourSlide+oddFloor),
+                collection.refIntList.GetRange((2 * floor+moduloFourSlide+oddFloor*2) + isEven, floor - oddFloor ),
+                collection.refIntList.GetRange((3 * floor+moduloFourSlide+oddFloor) + isEven, (floor) - 2 * isEven - oddFloor)
             };
             return concurrentBatches;
         }
@@ -158,14 +168,11 @@ namespace UnitTests
 
         private void SwapPhase(List<RefInt> batch, int isParal)
         {
-            if (IsOdd(batch.Count))
-                throw new Exception($"Batch.Count = {batch.Count} must be an even number.");
-
             var thread = isParal == 1 ? "(paral)" : "(seq)";
             var index = 0;
             while (index < (batch.Count))
             {
-                Console.WriteLine($"{thread}Thread Id= {Thread.CurrentThread.ManagedThreadId}");
+                //Console.WriteLine($"{thread}Thread Id= {Thread.CurrentThread.ManagedThreadId}");
                 if (index == batch.Count - 1)
                     break;
 
