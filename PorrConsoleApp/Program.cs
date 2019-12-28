@@ -12,34 +12,40 @@ namespace PorrConsoleApp
         static void Main(string[] args)
         {
             int n = 100;
+            Console.WriteLine($"Please provide number \"n\"=");
+            var consoleInput = Console.ReadLine();
+            bool success = int.TryParse(consoleInput, out int consoleOutput);
+            if (success)
+                n = consoleOutput;
 
-            var linearSorting = new OddEvenSorting(n);
+            var sorting = new OddEvenSorting(n);
 
-            var preResult = linearSorting.GetPrimalColletion();
+            var primalColletion = sorting.GetPrimalColletion();
 
-            var quickResult = linearSorting.GetPrimalQuickSortedColletion();
-            var sequentialResult = linearSorting.GetSortedSequentially().ToNormalIntList();
-            var pararellResult = linearSorting.GetSortedParallely().ToNormalIntList();
+            var quickResult = sorting.GetPrimalQuickSortedColletion();
 
-            var quickTime = linearSorting.QuickTime;
-            var sequentialTime = linearSorting.SequentialTime;
+            var parallelResult = sorting.GetSortedParallely().ToNormalIntList();
+            var sequentialResult = sorting.GetSortedSequentially().ToNormalIntList();
 
-            var parallelTime = linearSorting.ParallelTime;
-
+            var quickTime = sorting.QuickTime;
+            var sequentialTime = sorting.SequentialTime;
+            var parallelTime = sorting.ParallelTime;
 
             if (n <= 16)
-                Console.WriteLine(string.Join(", ", preResult.ToArray()));
+                Console.WriteLine(string.Join(", ", primalColletion.ToArray()));
 
             Console.WriteLine($"n = {n}, quickTime = {quickTime} ms");
             Console.WriteLine($"n = {n}, sequentialTime = {sequentialTime} ms");
-            Console.WriteLine($"n = {n}, referenceTime = {parallelTime} ms");
-            Console.WriteLine(string.Join(", ", pararellResult.ToArray()));
+            Console.WriteLine($"n = {n}, parallelTime = {parallelTime} ms");
 
             if (n <= 16)
             {
                 Console.WriteLine(string.Join(", ", sequentialResult.ToArray()));
-                Console.WriteLine(string.Join(", ", pararellResult.ToArray()));
+                Console.WriteLine(string.Join(", ", parallelResult.ToArray()));
             }
+
+            Console.WriteLine($"Press any key to exit.");
+            Console.ReadLine();
         }
     }
 }
