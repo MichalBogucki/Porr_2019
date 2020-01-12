@@ -8,137 +8,79 @@ namespace HybridizerSample1
 {
     public class EntryPoints
     {
-
-        //[EntryPoint("run")]
-        //public static void Run(int N, RefInt[] acuda, RefInt[] adotnet)
-        //{
-        //    //to make GPU USAGE
-        //    Parallel.For(0, N, i =>
-        //    {
-        //        adotnet[i].refint = ((acuda[i].refint) + 100);
-        //        Minus5(N, acuda, adotnet);
-        //    });
-        //}
-        //
-        //[Kernel]
-        //public static void Minus5(int N, RefInt[] acuda, RefInt[] adotnet)
-        //{
-        //    //to make GPU USAGE
-        //    Parallel.For(0, N, i => { acuda[i].refint = ((acuda[i].refint) - 5); });
-        //}
-
         [EntryPoint("run")]
-        public static void Run()
+        private static void SortParallely(
+            RefInt[] oddBatch0, RefInt[] oddBatch1, RefInt[] oddBatch2, RefInt[] oddBatch3, 
+            RefInt[] evenBatch0, RefInt[] evenBatch1, RefInt[] evenBatch2, RefInt[] evenBatch3,
+            int oddLength0, int oddLength1,int oddLength2, int oddLength3,
+            int evenLength0, int evenLength1, int evenLength2, int evenLength3,
+            int _n)
         {
 
-        }
-
-        [Kernel]
-        public static RefInt[] InitializeCollection(int _n, int multiplication, RefInt[] _primalColletion)
-        {
-            if (IsOdd(_n))
-                throw new Exception($"n = {_n} must be an even number.");
-
-            var rand = new Random();
-            var collection = new RefInt[_n];
-
-            var iteration = 0;
-            while (iteration < _n)
+            for (int iteration = 1; iteration <= _n; iteration++)
             {
-                collection[iteration] = new RefInt(rand.Next(_n * multiplication));
-                iteration += 1;
-            }
-            _primalColletion = collection;
-            return _primalColletion;
-        }
-        
-        [Kernel]
-        public static RefInt[] GetPrimalColletion(RefInt[] _primalColletion) { return _primalColletion; }
-
-
-        public static RefIntList GetSortedParallely(RefIntList _sortedParallely, RefInt[] _primalColletion, Stopwatch stopWatch, int parallelDegree, double ParallelTime, int _n)
-        {
-            if (_sortedParallely == null)
-                _sortedParallely = SortParallely(_sortedParallely, _primalColletion, stopWatch, parallelDegree, ParallelTime,  _n);
-            return _sortedParallely;
-        }
-
-        
-
-        [Kernel]
-        private static RefIntList SortParallely(RefIntList _sortedParallely, RefInt[] _primalColletion, Stopwatch stopWatch, int parallelDegree, double ParallelTime,  int _n)
-        {
-            _sortedParallely = new RefIntList(_primalColletion, _primalColletion.Length);
-            var oddBatches = InitializeConcurrentBatches(_sortedParallely, _n, isEven: 0);
-            var evenBatches = InitializeConcurrentBatches(_sortedParallely, _n, isEven: 1);
-
-            stopWatch = Stopwatch.StartNew();
-            var iteration = 1;
-            while (iteration <= _n)
-            {
-                if (IsOdd(iteration))
+                if (iteration % 2 == 1)
                 {
-                    Parallel.ForEach(oddBatches,
-                        new ParallelOptions { MaxDegreeOfParallelism = parallelDegree },
-                        batch => {
-                            SwapPhase(batch, isParal: 1);
-                            //Console.WriteLine("(paral)Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
-                        });
+                    Parallel.For(0, 4, i =>
+                    {
+                        if (i == 0)
+                        {
+                            SwapPhase(oddBatch0, 1, oddLength0);
+                        }
+                        if (i == 1)
+                        {
+                            SwapPhase(oddBatch1, 1, oddLength1);
+                        }
+                        if (i == 2)
+                        {
+                            SwapPhase(oddBatch2, 1, oddLength2);
+                        }
+                        if (i == 3)
+                        {
+                            SwapPhase(oddBatch3, 1, oddLength3);
+                        }
+                    });
                 }
                 else
                 {
-                    Parallel.ForEach(evenBatches,
-                        new ParallelOptions { MaxDegreeOfParallelism = parallelDegree },
-                        batch => {
-                            SwapPhase(batch, isParal: 1);
-                            //Console.WriteLine("(paral)Thread Id= {0}", Thread.CurrentThread.ManagedThreadId);
-                        });
+                    Parallel.For(0, 4, i =>
+                    {
+                        if (i == 0)
+                        {
+                            SwapPhase(evenBatch0, 1, evenLength0);
+                        }
+                        if (i == 1)
+                        {
+                            SwapPhase(evenBatch1, 1, evenLength1);
+                        }
+                        if (i == 2)
+                        {
+                            SwapPhase(evenBatch2, 1, evenLength2);
+                        }
+                        if (i == 3)
+                        {
+                            SwapPhase(evenBatch3, 1, evenLength3);
+                        }
+                    });
                 }
-                iteration += 1;
             }
-            stopWatch.Stop();
-            ParallelTime = stopWatch.Elapsed.TotalMilliseconds;
-            _sortedParallely.time = ParallelTime;
-            return _sortedParallely;
         }
 
         [Kernel]
-        private static RefInt[][] InitializeConcurrentBatches(RefIntList collection, int _n, int isEven)
+        public static RefInt[] GetPrimalColletion(RefInt[] _primalColletion)
         {
-            var moduloFourSlide = 0;
-            if (_n % 4 == 2)
-                moduloFourSlide = 2;
-            var oddFloor = 0;
-            var floor = (int)Math.Floor(_n / 4.0);
-            if (IsOdd(floor))
-                oddFloor = 1; ;
-
-            var concurrentBatches = new RefInt[4][];
-
-            concurrentBatches[0] = GetRange(collection.refIntList, isEven, floor + oddFloor);
-            concurrentBatches[1] = GetRange(collection.refIntList, (1 * floor + oddFloor) + isEven, floor + moduloFourSlide + oddFloor);
-            concurrentBatches[2] = GetRange(collection.refIntList, (2 * floor + moduloFourSlide + oddFloor * 2) + isEven, floor - oddFloor);
-            concurrentBatches[3] = GetRange(collection.refIntList, (3 * floor + moduloFourSlide + oddFloor) + isEven, (floor) - 2 * isEven - oddFloor);
-
-            return concurrentBatches;
+            return _primalColletion;
         }
 
 
         [Kernel]
-        private static bool IsOdd(int iteration)
-        {
-            return iteration % 2 == 1;
-        }
-
-        [Kernel]
-        private static void SwapPhase(RefInt[] batch, int isParal)
+        private static void SwapPhase(RefInt[] batch, int isParal, int batchLength)
         {
             var thread = isParal == 1 ? "(paral)" : "(seq)";
             var index = 0;
-            while (index < (batch.Length))
+            while (index < (batchLength))
             {
-                //Console.WriteLine($"{thread}Thread Id= {Thread.CurrentThread.ManagedThreadId}");
-                if (index == batch.Length - 1)
+                if (index == batchLength - 1)
                     break;
 
                 if (batch[index].refint > batch[index + 1].refint)
@@ -151,59 +93,24 @@ namespace HybridizerSample1
             }
         }
 
-        [Kernel]
-        private static RefInt[] GetRange(RefInt[] refIntList, int index, int count)
-        {
-            var tempCopy = new RefInt[count];
-            for (int i = 0; i < count; i++)
-            {
-                tempCopy[i] = refIntList[index + i];
-            }
-
-            return tempCopy;
-        }
 
 
         //###########################################################################
 
         static void Main(string[] args)
         {
-            // 268 MB allocated on device -- should fit in every CUDA compatible GPU
-            //int N = 1024 * 1024 * 16;
-            int N = 8;
-            var acuda = new RefInt[N];
-            var adotnet = new RefInt[N];
-            var b = new RefInt[N];
-
-            //Initialize acuda et adotnet and b by some doubles randoms, acuda and adotnet have same numbers. 
-            for (int i = 0; i < N; ++i)
-            {
-                acuda[i]= new RefInt(i);
-                adotnet[i]= new RefInt(i);
-                b[i]= adotnet[i];
-            }
-            
             cudaDeviceProp prop;
             cuda.GetDeviceProperties(out prop, 0);
             var runner = HybRunner.Cuda().SetDistrib(prop.multiProcessorCount * 16, 128);
 
-            // create a wrapper object to call GPU methods instead of C#
             var entryPoints = new EntryPoints();
             
-
-            // run the method on GPU
-            Console.WriteLine($"--GPU STARTED");
-            //wrapped.OddEvenSorting(N, acuda, adotnet); >> ToDO UNCOMMENT ME <<<
-            Console.WriteLine($"--GPU finished");
-
-
-            //-------------------------------------
-            int n = 16;
-            Console.WriteLine($"Please provide number \"n\"=100");
-            //var consoleInput = Console.ReadLine();
-            //bool success = int.TryParse(consoleInput, out int consoleOutput);
-            //if (success)
-            //    n = consoleOutput;
+            int n = 1024;
+            Console.WriteLine($"Please provide number \"n\":");
+            var consoleInput = Console.ReadLine();
+            bool success = int.TryParse(consoleInput, out int consoleOutput);
+            if (success)
+                n = consoleOutput;
 
 
 
@@ -214,39 +121,163 @@ namespace HybridizerSample1
             RefInt[] _primalColletion = new RefInt[] { };
             RefIntList _sortedParallely = null;
             Stopwatch stopWatch = null;
-            int parallelDegree = 4;
             //################################
 
-            var wrapped = runner.Wrap(entryPoints);
+            //-------- InitializeColleciton  --------
+            if (_n % 2 == 1)
+                throw new Exception($"n = {_n} must be an even number.");
 
-            _primalColletion = InitializeCollection(_n, multiplication, _primalColletion);
+            var rand = new Random();
+            var collection = new RefInt[_n];
+
+            var iteration = 0;
+            while (iteration < _n)
+            {
+                collection[iteration] = new RefInt(rand.Next(_n * multiplication));
+                iteration += 1;
+            }
+            _primalColletion = collection;
+            //-------- InitializeCollection  --------
             
-            //_primalColletion = wrapped.OddEvenSorting(n, _n, multiplication, _primalColletion);
-
             var primalColletion = GetPrimalColletion(_primalColletion);
 
-            var parallelResult = GetSortedParallely( _sortedParallely, _primalColletion,  stopWatch, parallelDegree,  ParallelTime, _n);
-            ParallelTime = parallelResult.time;
 
-            var pararellReslutList = parallelResult.ToNormalIntList();
+            //----------InitializeBatches---------------
+            _sortedParallely = new RefIntList(_primalColletion, _primalColletion.Length);
+
+                
+            //++++++++++++++ OddBatches +++++++++++++++
+            var moduloFourSlide = 0;
+            if (_n % 4 == 2)
+                moduloFourSlide = 2;
+            var oddFloor = 0;
+            var floor = (int)Math.Floor(_n / 4.0);
+            if (floor % 2 == 1)
+                oddFloor = 1; ;
+
+            //----------------------GetRange()----------------------------
+            var oddLength0 = floor + oddFloor;
+            var oddBatch0 = new RefInt[oddLength0];
+            for (int i = 0; i < oddLength0; i++)
+            {
+                oddBatch0[i] = _sortedParallely.refIntList[0 + i];
+            }
+            //----------------------GetRange()----------------------------
+            var oddLength1 = floor + moduloFourSlide + oddFloor;
+            var oddBatch1 = new RefInt[oddLength1];
+            for (int i = 0; i < oddLength1; i++)
+            {
+                oddBatch1[i] = _sortedParallely.refIntList[(1 * floor + oddFloor) + 0 + i];
+            }
+            //----------------------GetRange()----------------------------
+            var oddLength2 = floor - oddFloor;
+            var oddBatch2 = new RefInt[floor - oddFloor];
+            for (int i = 0; i < floor - oddFloor; i++)
+            {
+                oddBatch2[i] = _sortedParallely.refIntList[(2 * floor + moduloFourSlide + oddFloor * 2) + 0 + i];
+            }
+            //----------------------GetRange()----------------------------
+            var oddLength3 = (floor) - 2 * 0 - oddFloor;
+            var oddBatch3 = new RefInt[(floor) - 2 * 0 - oddFloor];
+            for (int i = 0; i < (floor) - 2 * 0 - oddFloor; i++)
+            {
+                oddBatch3[i] = _sortedParallely.refIntList[(3 * floor + moduloFourSlide + oddFloor) + 0 + i];
+            }
+            //----------------------GetRange()----------------------------
+            //++++++++++++++ OddBatches +++++++++++++++
 
 
+            //++++++++++++++ EvenBatches +++++++++++++++
+             moduloFourSlide = 0;
+            if (_n % 4 == 2)
+                moduloFourSlide = 2;
+             oddFloor = 0;
+             floor = (int)Math.Floor(_n / 4.0);
+            if (floor % 2 == 1)
+                oddFloor = 1; ;
+
+            //----------------------GetRange()----------------------------
+            var evenLength0 = floor + oddFloor;
+            var evenBatch0 = new RefInt[floor + oddFloor];
+            for (int i = 0; i < floor + oddFloor; i++)
+            {
+                evenBatch0[i] = _sortedParallely.refIntList[1 + i];
+            }
+            //----------------------GetRange()----------------------------
+            var evenLength1 = floor + moduloFourSlide + oddFloor;
+            var evenBatch1 = new RefInt[floor + moduloFourSlide + oddFloor];
+            for (int i = 0; i < floor + moduloFourSlide + oddFloor; i++)
+            {
+                evenBatch1[i] = _sortedParallely.refIntList[(1 * floor + oddFloor) + 1 + i];
+            }
+            //----------------------GetRange()----------------------------
+            var evenLegth2 = floor - oddFloor;
+            var evenBatch2 = new RefInt[floor - oddFloor];
+            for (int i = 0; i < floor - oddFloor; i++)
+            {
+                evenBatch2[i] = _sortedParallely.refIntList[(2 * floor + moduloFourSlide + oddFloor * 2) + 1 + i];
+            }
+            //----------------------GetRange()----------------------------
+            var evenLength3 = (floor) - 2 * 1 - oddFloor;
+            var evenBatch3 = new RefInt[(floor) - 2 * 1 - oddFloor];
+            for (int i = 0; i < (floor) - 2 * 1 - oddFloor; i++)
+            {
+                evenBatch3[i] = _sortedParallely.refIntList[(3 * floor + moduloFourSlide + oddFloor) + 1 + i];
+            }
+            //----------------------GetRange()----------------------------
+            //++++++++++++++ EvenBatches +++++++++++++++
+
+
+
+
+            //----------InitializeBatches---------------
+
+
+
+
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            var wrapped = runner.Wrap(entryPoints);
+            //----StopWatch----
+
+            stopWatch = Stopwatch.StartNew();
+            
+            SortParallely(
+                oddBatch0, oddBatch1, oddBatch2, oddBatch3, 
+                evenBatch0, evenBatch1, evenBatch2, evenBatch3,
+                oddLength0,oddLength1,oddLength2,oddLength3,
+                evenLength0,evenLength1,evenLegth2,evenLength3,
+                _n); //On CPU
+
+            //wrapped.SortParallely(
+            //    oddBatch0, oddBatch1, oddBatch2, oddBatch3,
+            //    evenBatch0, evenBatch1, evenBatch2, evenBatch3,
+            //    oddLength0, oddLength1, oddLength2, oddLength3,
+            //    evenLength0, evenLength1, evenLegth2, evenLength3,
+            //    _n); //On GPU
+            
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            stopWatch.Stop();
+            ParallelTime = stopWatch.Elapsed.TotalMilliseconds;
+            //----StopWatch----
+            
+            var pararellReslutList = _sortedParallely.ToNormalIntList();
+            
+            
             if (n <= 16)
                 for (int i = 0; i < n; i++)
                 {
                     Console.WriteLine($"{primalColletion[i].refint}");
                 }
-
+            
             Console.WriteLine($"n = {n}, parallelTime = {ParallelTime} ms");
-
+            
             if (n <= 16)
                 for (int i = 0; i<n; i++)
                 {
-                    Console.WriteLine($"{parallelResult.refIntList[i].refint}");
+                    Console.WriteLine($"{_sortedParallely.refIntList[i].refint}");
                 }
-
-            Console.WriteLine($"Press any key to exit.");
-            Console.ReadLine();
         }
 
         //#############################################################

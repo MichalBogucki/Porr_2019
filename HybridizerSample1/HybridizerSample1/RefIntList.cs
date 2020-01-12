@@ -3,8 +3,7 @@
     public class  RefIntList
     {
         private static int N;
-        public RefInt[] refIntList;// { get; set; } = new RefInt[N];
-        public double time;
+        public RefInt[] refIntList;
 
         public RefIntList(RefIntList refIntListToCopy, int n)
         {

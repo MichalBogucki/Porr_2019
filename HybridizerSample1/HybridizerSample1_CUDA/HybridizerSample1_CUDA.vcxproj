@@ -65,7 +65,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetProjectName>$([System.String]::Copy(&quot;HybridizerSample1_CUDA&quot;).Replace(&quot;_CUDA&quot;,&quot;&quot;))</DotNetProjectName>
+    <DotNetProjectName>$([System.String]::Copy("HybridizerSample1_CUDA").Replace("_CUDA",""))</DotNetProjectName>
   </PropertyGroup>
   <PropertyGroup Label="HybridizerConfig" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <HybridizerFlavors>CUDA</HybridizerFlavors>
@@ -78,11 +78,11 @@
     <HybridizerBuildSatellite>$(HybridizerInstallPath)\bin\Hybridizer.VSIntegration.BuildSatellite.exe</HybridizerBuildSatellite>
     <HybridizerGenerateLineInformation>true</HybridizerGenerateLineInformation>
     <HybridizerUseFunctionPointers>true</HybridizerUseFunctionPointers>
-    <HybridizerUseHybridArrays>false</HybridizerUseHybridArrays>
     <HybridizerDelegateSupport>false</HybridizerDelegateSupport>
     <HybridizerPlatform>x64</HybridizerPlatform>
     <HybridizerConfiguration>Debug</HybridizerConfiguration>
     <HybridizerWorkingDirectory>hybridizer-generated-sources</HybridizerWorkingDirectory>
+    <HybridizerUseHybridArrays>false</HybridizerUseHybridArrays>
   </PropertyGroup>
   <PropertyGroup Label="HybridizerConfig" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <HybridizerFlavors>CUDA</HybridizerFlavors>
