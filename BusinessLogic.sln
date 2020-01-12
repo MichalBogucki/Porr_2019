@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C7A6B61B-6200-454A-B589-B0D3F863FF69}"
 	ProjectSection(SolutionItems) = preProject
 		Projekty-A_Karbowski19Z.pdf = Projekty-A_Karbowski19Z.pdf
+		HybridizerSample1\HybridizerSample1\RefInt.cs = HybridizerSample1\HybridizerSample1\RefInt.cs
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HybridizerSample1", "HybridizerSample1\HybridizerSample1\HybridizerSample1.csproj", "{8D175F1A-11C1-459A-B65A-8359F5F25767}"

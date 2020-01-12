@@ -4,7 +4,8 @@
     {
         private static int N;
         public RefInt[] refIntList;// { get; set; } = new RefInt[N];
-        
+        public double time;
+
         public RefIntList(RefIntList refIntListToCopy, int n)
         {
             N = n;
