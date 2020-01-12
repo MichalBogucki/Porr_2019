@@ -46,8 +46,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EntryPoints.cs" />
+    <Compile Include="OddEvenSorting.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RefInt.cs" />
+    <Compile Include="RefIntList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
