@@ -242,19 +242,19 @@ namespace HybridizerSample1
 
             stopWatch = Stopwatch.StartNew();
             
-            SortParallely(
-                oddBatch0, oddBatch1, oddBatch2, oddBatch3, 
-                evenBatch0, evenBatch1, evenBatch2, evenBatch3,
-                oddLength0,oddLength1,oddLength2,oddLength3,
-                evenLength0,evenLength1,evenLegth2,evenLength3,
-                _n); //On CPU
-
-            //wrapped.SortParallely(
-            //    oddBatch0, oddBatch1, oddBatch2, oddBatch3,
+            //SortParallely(
+            //    oddBatch0, oddBatch1, oddBatch2, oddBatch3, 
             //    evenBatch0, evenBatch1, evenBatch2, evenBatch3,
-            //    oddLength0, oddLength1, oddLength2, oddLength3,
-            //    evenLength0, evenLength1, evenLegth2, evenLength3,
-            //    _n); //On GPU
+            //    oddLength0,oddLength1,oddLength2,oddLength3,
+            //    evenLength0,evenLength1,evenLegth2,evenLength3,
+            //    _n); //On CPU
+
+            wrapped.SortParallely(
+                oddBatch0, oddBatch1, oddBatch2, oddBatch3,
+                evenBatch0, evenBatch1, evenBatch2, evenBatch3,
+                oddLength0, oddLength1, oddLength2, oddLength3,
+                evenLength0, evenLength1, evenLegth2, evenLength3,
+                _n); //On GPU
             
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
