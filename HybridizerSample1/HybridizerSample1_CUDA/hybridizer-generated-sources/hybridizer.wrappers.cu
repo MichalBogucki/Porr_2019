@@ -61,23 +61,6 @@ namespace hybridizer { struct runtime ; }
 
 #pragma region defined enums and types
 #if defined(__cplusplus) || defined(__CUDACC__)
-// Intrinsic type Exception used
-#define __TYPE_DECL_hybridizer_baseexception___
-namespace System { 
-struct ParamsArray ;
-} // Leaving namespace
-namespace System { namespace Runtime { namespace Serialization { 
-struct ISerializable ;
-} } } // Leaving namespace
-namespace System { 
-struct SystemException ;
-} // Leaving namespace
-namespace System { 
-struct ArgumentException ;
-} // Leaving namespace
-namespace System { 
-struct ArgumentNullException ;
-} // Leaving namespace
 #endif
 #pragma endregion
 
